@@ -5,31 +5,52 @@ class Contact
 
   attr_accessor :name, :email
 
+  @@all_contacts = []
+
   def initialize(name, email)
-    # TODO: Assign parameter values to instance variables.
+    @name = name
+    @email = email
   end
 
   # Provides functionality for managing a list of Contacts in a database.
   class << self
 
+    def sync_csv
+      csv_file = CSV.open('contact_list.csv', 'w') do |csv| 
+                   @@all_contacts.each_with_index do |contact, index|
+                   csv << [index+1, contact.name, contact.email]
+                 end
+      end
+      return 
+    end
+
     # Returns an Array of Contacts loaded from the database.
     def all
-      # TODO: Return an Array of Contact instances made from the data in 'contacts.csv'.
+      return @@all_contacts
     end
 
     # Creates a new contact, adding it to the database, returning the new contact.
     def create(name, email)
-      # TODO: Instantiate a Contact, add its data to the 'contacts.csv' file, and return it.
+      new_contact = Contact.new(name, email)
+      @@all_contacts << new_contact
+      sync_csv
+      return new_contact
     end
 
     # Returns the contact with the specified id. If no contact has the id, returns nil.
     def find(id)
-      # TODO: Find the Contact in the 'contacts.csv' file with the matching id.
+      @@all_contacts.length.times do |i|
+        return @@all_contacts[i-1] if i == id
+      end
     end
 
     # Returns an array of contacts who match the given term.
     def search(term)
-      # TODO: Select the Contact instances from the 'contacts.csv' file whose name or email attributes contain the search term.
+      output = []
+      @@all_contacts.each do |contact|
+        output << contact if contact.name.match(/.*term.*/) || contact.email.match(/.*term.*/)
+      end
+      return output
     end
 
   end
