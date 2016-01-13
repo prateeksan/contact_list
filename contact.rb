@@ -5,52 +5,59 @@ class Contact
 
   attr_accessor :name, :email
 
-  @@all_contacts = []
-
   def initialize(name, email)
     @name = name
     @email = email
+    @index = 0
   end
 
   # Provides functionality for managing a list of Contacts in a database.
-  class << self
-
-    def sync_csv
-      csv_file = CSV.open('contact_list.csv', 'w') do |csv| 
-                   @@all_contacts.each_with_index do |contact, index|
-                   csv << [index+1, contact.name, contact.email]
-                 end
-      end
-      return 
-    end
+  class << self 
 
     # Returns an Array of Contacts loaded from the database.
     def all
-      return @@all_contacts
+      puts "\n"
+      CSV.foreach('contact_list.csv') do |csv|
+        puts "ID: #{$.} \t Name: #{csv[0]} \t Email: #{csv[1]}"
+      end
+      puts "\n"
     end
 
     # Creates a new contact, adding it to the database, returning the new contact.
     def create(name, email)
       new_contact = Contact.new(name, email)
-      @@all_contacts << new_contact
-      sync_csv
-      return new_contact
+      update_csv(new_contact)
+      puts "\n New Contact Created: \t Name: #{name} \t Email: #{email} \n"
     end
 
     # Returns the contact with the specified id. If no contact has the id, returns nil.
     def find(id)
-      @@all_contacts.length.times do |i|
-        return @@all_contacts[i] if i+1 == id
-      end
+      puts "\n"
+      csv = CSV.readlines('contact_list.csv')[id-1]
+      puts (csv && (id != 0))? "ID: #{id} \t Name: #{csv[0]} \t Email: #{csv[1]}" : "Contact ID invalid."
+      puts "\n"
     end
 
     # Returns an array of contacts who match the given term.
     def search(term)
-      output = []
-      @@all_contacts.each do |contact|
-        output << contact if contact.name.match(/.*#{term}.*/) || contact.email.match(/.*#{term}.*/)
+      term_found = false
+      puts "\n"
+      CSV.foreach('contact_list.csv') do |csv|
+        if csv[0].match(/.*#{term}.*/) || csv[1].match(/.*#{term}.*/)
+          puts "ID: #{$.} \t Name: #{csv[0]} \t Email: #{csv[1]}" 
+          term_found = true
+        end
       end
-      return output
+      puts "No matches in the databse..." if term_found == false
+      puts "\n"
+    end
+
+    private
+
+    def update_csv(new_contact)
+      CSV.open('contact_list.csv', 'ab') do |csv|
+        csv << [new_contact.name, new_contact.email]
+      end
     end
 
   end
