@@ -40,7 +40,7 @@ class Contact
     # Returns the contact with the specified id. If no contact has the id, returns nil.
     def find(id)
       @@all_contacts.length.times do |i|
-        return @@all_contacts[i-1] if i == id
+        return @@all_contacts[i] if i+1 == id
       end
     end
 
@@ -48,7 +48,7 @@ class Contact
     def search(term)
       output = []
       @@all_contacts.each do |contact|
-        output << contact if contact.name.match(/.*term.*/) || contact.email.match(/.*term.*/)
+        output << contact if contact.name.match(/.*#{term}.*/) || contact.email.match(/.*#{term}.*/)
       end
       return output
     end

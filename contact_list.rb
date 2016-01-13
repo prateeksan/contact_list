@@ -1,5 +1,6 @@
 require_relative 'contact'
 require 'pry'
+require 'colorize'
 
 # Interfaces between a user and their contact list. Reads from and writes to standard I/O.
 class ContactList
@@ -18,7 +19,7 @@ class ContactList
   def print_command_list
 
     COMMAND_LIST.each do |command|
-      puts command
+      puts "\n#{command}"
     end
   end
 
@@ -27,12 +28,14 @@ class ContactList
     name = gets.chomp
     puts "Enter Contact Email:"
     email = gets.chomp
-    Contact.create(name, email)
+    contact = Contact.create(name, email)
+    puts "\n New Contact Created: \t Name: #{contact.name} \t Email: #{contact.email} \n"
   end
 
   def list_all
-    binding.pry
-    puts Contact.all
+    Contact.all.each_with_index do |contact, index|
+      puts "\n ID: #{index + 1}\t Name: #{contact.name}\t Email: #{contact.email} \n"
+    end
   end
 
   def input_command
@@ -43,13 +46,19 @@ class ContactList
   def show_contact
     puts "Enter contact ID"
     id = gets.chomp.to_i
-    puts Contact.find(id)
+    contact = Contact.find(id)
+    if contact
+      puts "\n ID: #{id} \t Name: #{contact.name} \t Email: #{contact.email}\n"
+    end
   end
 
   def search_contacts
     puts "Enter search term"
     term = gets.chomp
-    puts Contact.search(term)
+    contacts = Contact.search(term)
+    contacts.each do |contact|
+      puts "\n Name: #{contact.name}\t Email: #{contact.email} \n"
+    end
   end
 
   def main_loop
