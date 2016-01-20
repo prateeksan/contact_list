@@ -1,6 +1,7 @@
-require 'csv'
-
 # Represents a person in an address book.
+require 'csv'
+require 'pry'
+require 'pg'
 class Contact
 
   attr_accessor :name, :email
@@ -14,27 +15,46 @@ class Contact
   # Provides functionality for managing a list of Contacts in a database.
   class << self 
 
+    def connection
+      @@connection = PG.connect(
+        host: 'localhost',
+        dbname: 'contacts',
+        user: 'development',
+        password: 'development'
+      )
+    end
+
     # Returns an Array of Contacts loaded from the database.
     def all
       puts "\n"
-      CSV.foreach('contact_list.csv') do |csv|
-        puts "ID: #{$.} \t Name: #{csv[0]} \t Email: #{csv[1]}"
+      connection.exec("SELECT * FROM contacts;").each do |row|
+        puts "ID: #{row['id']} \t Name: #{row['name']} \t Email: #{row['email']}"
       end
       puts "\n"
     end
 
     # Creates a new contact, adding it to the database, returning the new contact.
     def create(name, email)
-      new_contact = Contact.new(name, email)
-      update_csv(new_contact)
-      puts "\n New Contact Created: \t Name: #{name} \t Email: #{email} \n"
+      connection.exec("INSERT INTO contacts (Name, Email) VALUES (\'#{name}\', \'#{email}\');")
+      rows = connection.exec("SELECT * FROM contacts WHERE name = '#{name}' AND email = '#{email}'")
+      rows = rows.values
+      #new_contact = Contact.new(name, email)
+      #update_csv(new_contact)
+      puts "\n New Contact Created: \t Id: #{rows[-1][0]} \t Name: #{rows[-1][1]} \t Email: #{rows[-1][2]} \n"
     end
 
     # Returns the contact with the specified id. If no contact has the id, returns nil.
     def find(id)
       puts "\n"
-      csv = CSV.readlines('contact_list.csv')[id-1]
-      puts (csv && (id != 0))? "ID: #{id} \t Name: #{csv[0]} \t Email: #{csv[1]}" : "Contact ID invalid."
+      rows = connection.exec("SELECT * FROM contacts WHERE id = #{id};")
+      #csv = CSV.readlines('contact_list.csv')[id-1]
+      if rows.values != [] && (id != 0) 
+        puts "ID: #{rows[0]['id']} \t Name: #{rows[0]['name']} \t Email: #{rows[0]['email']}"
+        return true
+      else
+        puts "Contact ID invalid."
+        return false
+      end
       puts "\n"
     end
 
@@ -42,22 +62,39 @@ class Contact
     def search(term)
       term_found = false
       puts "\n"
-      CSV.foreach('contact_list.csv') do |csv|
-        if csv[0].match(/.*#{term}.*/) || csv[1].match(/.*#{term}.*/)
-          puts "ID: #{$.} \t Name: #{csv[0]} \t Email: #{csv[1]}" 
+      query = connection.exec("SELECT * FROM contacts;") 
+      query.each do |row|
+        if row['name'].match(/.*#{term}.*/) || row['email'].match(/.*#{term}.*/)
+          puts "ID: #{row['id']} \t Name: #{row['name']} \t Email: #{row['email']}" 
           term_found = true
         end
       end
-      puts "No matches in the databse..." if term_found == false
+      puts "No matches in the database..." if term_found == false
       puts "\n"
     end
 
-    private
-
-    def update_csv(new_contact)
-      CSV.open('contact_list.csv', 'ab') do |csv|
-        csv << [new_contact.name, new_contact.email]
+    def delete(id)
+      if find(id)
+        puts "\n"
+        puts "Are you sure you want to delete this contact? (Y/N)"
+        confirmation = gets.chomp
+        if confirmation == "Y"
+          connection.exec("DELETE FROM contacts WHERE id = #{id};") 
+          #csv = CSV.readlines('contact_list.csv')[id-1]
+          puts "Contact deleted..."
+        end
+        puts "\n"
       end
+    end
+    #Rewrites the CSV file with all the database info
+    def sync_csv
+      query = connection.exec("SELECT * FROM contacts;")
+      CSV.open('contact_list.csv', 'wb') do |csv|
+        query.each do |row|
+          csv << [row['name'], row['email']]
+        end
+      end
+      puts "contacts synced"
     end
 
   end

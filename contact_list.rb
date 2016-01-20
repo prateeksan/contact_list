@@ -10,6 +10,8 @@ class ContactList
                   "list - list all contacts",
                   "show - show a contact",
                   "search - search contacts",
+                  "delete - delete contact",
+                  "sync - snyc csv",
                   "q - quit"
                   ]
 
@@ -20,11 +22,23 @@ class ContactList
     while true
       print_command_list
       command = input_command
-      create_contact if command == "new"
-      list_all if command == "list"
-      show_contact if command == "show"
-      search_contacts if command == "search"
-      break if command == "q"
+      if command == "new"
+        create_contact 
+      elsif command == "list"
+        list_all
+      elsif command == "show"
+        show_contact
+      elsif command == "search"
+        search_contacts 
+      elsif command == "delete"
+        delete_contact 
+      elsif command == "sync"
+        sync_csv 
+      elsif command == "q"
+        break 
+      else
+        puts "Invalid input, try again"
+      end
     end
   end
 
@@ -66,6 +80,16 @@ class ContactList
     puts "Enter search term"
     term = gets.chomp
     Contact.search(term)
+  end
+
+  def delete_contact
+    puts "Enter Contact ID"
+    term = gets.chomp.to_i
+    Contact.delete(term) 
+  end
+
+  def sync_csv
+    Contact.sync_csv
   end
 
 end
