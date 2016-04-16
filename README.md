@@ -19,4 +19,4 @@ Clone the repo:
 
 `cd` into the repo and run:
 
-` $ ruby contact_list.rb
+` $ ruby contact_list.rb`
